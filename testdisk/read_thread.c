@@ -65,7 +65,7 @@ void main(int argc, char *argv[]){
         printf("%s",strerror(errno));
     }
 
-    
+    //创建线程
     pthread_t Pthread[NUM_Threads];
     THDATA index[NUM_Threads];
     int i,ret;
@@ -99,7 +99,7 @@ void main(int argc, char *argv[]){
     time_use=(end.tv_sec-start.tv_sec)*1000000+(end.tv_usec-start.tv_usec);//微秒
     printf("time_use is %.10f us\n",time_use);
     //printf("when the blocksize is %d MB, the read speed is %.10f MB/s\n");
-    
+
     printf("the main() thread end!\n");
     
 
