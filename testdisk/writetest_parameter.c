@@ -1,3 +1,4 @@
+//单盘单线程
 #define _XOPEN_SOURCE 500
 #include <stdint.h>
 #include <fcntl.h>
@@ -20,7 +21,7 @@ void getRandString(char s[],int num){
     char ss[2] = {0};
     int lstr = strlen(str);//计算字符串长度
     srand((unsigned int)time((time_t *)NULL));//使用系统时间来初始化随机数发生器
-    for( i = 1; i < num; i++){
+    for( i = 1; i <= num; i++){
         //rand()%lstr 可随机返回0-71之间的整数, str[0-71]可随机得到其中的字符
         //函数sprintf(): 字符串格式化命令, 把格式化的数据写入某个字符串中
         sprintf(ss,"%c",str[(rand()%lstr)]);
@@ -66,35 +67,35 @@ void main(int argc, char *argv[]){
     }
 
     //获取参数
-    int blocksize = atoi(argv[1]);  //convert a string to an integer
-    int num = atoi(argv[2]);
-    int initial_offset = atoi(argv[3]);
-    printf("blocksize is %d MB\n",blocksize);
-    printf("the number of write times is  %d\n",num);
-    printf("the initial offset is %d\n",initial_offset);
+    long blocksize = atol(argv[1]);  //convert a string to long
+    long num = atol(argv[2]);
+    long initial_offset = atol(argv[3]);
+    printf("blocksize is %ld MB\n",blocksize);
+    printf("the number of write times is  %ld\n",num);
+    printf("the initial offset is %ld\n",initial_offset);
 
     
     //构建XX MB大小的字符串
     char *buf_string = getBufString(blocksize);
-    printf("the length of buf_string is : %d MB\n",(strlen(buf_string)+blocksize)/1024/1024);
+    printf("the length of buf_string is : %d MB\n",(strlen(buf_string))/1024/1024);
 
     //获取程序开始执行时间
     struct timeval start, end;
     float time_use=0;
     gettimeofday(&start,NULL);
     
-    const char* pathname="/dev/sdb";
+    const char* pathname="/dev/sdf";
     int fd=open(pathname,O_WRONLY);
     if (fd==-1) {
         printf("%s",strerror(errno));
     }
 
-    int i;
+    long i;
     ssize_t ret;
     for(i = 0; i< num; i++){
-        int  offset = initial_offset+ i*(blocksize*1024*1024+4);
+        long  offset = initial_offset+ i*(blocksize*1024*1024);
         if((ret = pwrite(fd,buf_string,blocksize*1024*1024,offset)) == -1){
-            printf("pwrite is error!");}
+            printf("%d pwrite is error!%s,the offset is %ld\n",i,strerror(errno),initial_offset+ i*(blocksize*1024*1024));}
         else{
             printf("%d pwrite success\n ",i);
             //printf("the writed data is: %s\n",buf_string);

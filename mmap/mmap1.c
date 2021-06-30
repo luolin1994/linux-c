@@ -18,6 +18,7 @@
          MAP_ANON 匿名映射时用
  * fd：要映射到内存中的文件描述符。如果使用匿名内存映射时，即flags中设置了MAP_ANON，fd设为-1。
  * offset：文件映射的偏移量，通常设置为0，代表从文件最前方开始对应，offset必须是分页大小的整数倍（一般是4096的整数倍）。
+ * 参考：https://blog.csdn.net/qq_36359022/article/details/79992287
  * */
 #include <stdio.h>
 #include <sys/types.h>

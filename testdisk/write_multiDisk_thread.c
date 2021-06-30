@@ -1,3 +1,4 @@
+//多盘多线程,同时写多盘，每盘一个线程
 #define _XOPEN_SOURCE 500
 #include <stdint.h>
 #include <fcntl.h>
@@ -10,7 +11,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#define NUM_Threads 5
+#define NUM_Threads 3
+
 
 /*
 *结构体参数传递的线程并发编程，写入设备文件
@@ -24,10 +26,11 @@
 typedef struct thread_data
 {
     int fd;
-    int blocksize;
-    int offset; 
+    long blocksize;
+    long offset; 
     int threadid;
     char * buf_string;
+    long count;
 }THDATA, *PTHDATA;
 
 
@@ -38,7 +41,7 @@ void getRandString(char s[],int num){
     char ss[2] = {0};
     int lstr = strlen(str);//计算字符串长度
     srand((unsigned int)time((time_t *)NULL));//使用系统时间来初始化随机数发生器
-    for( i = 1; i < num; i++){
+    for( i = 1; i <= num; i++){
         //rand()%lstr 可随机返回0-71之间的整数, str[0-71]可随机得到其中的字符
         //函数sprintf(): 字符串格式化命令, 把格式化的数据写入某个字符串中
         sprintf(ss,"%c",str[(rand()%lstr)]);
@@ -75,30 +78,53 @@ void  * pwritedisk(void * pThreadData){
     PTHDATA tData= (PTHDATA)pThreadData;
     printf("Pthread : %d 开始执行 \n",tData->threadid);
     ssize_t ret;
-    if((ret = pwrite(tData->fd,tData->buf_string,tData->blocksize*1024*1024,tData->offset)) == -1){
+    long i;
+    for(i = 0;i< tData->count;i++){
+        long poffset = tData->offset + i*(tData->blocksize*1024*1024);
+        if((ret = pwrite(tData->fd,tData->buf_string,tData->blocksize*1024*1024,poffset)) == -1){
         printf("pwrite %d failed\n",tData->threadid);
-    }else{
-        printf("线程 %d pwrite 操作成功!\n",tData->threadid);
+        }else{
+            printf("线程 %d pwrite 第 %ld次操作成功!\n",tData->threadid,i);
         //printf("线程 %d write buf is:  %s\n",tData->threadid,tData->buf_string);
     }
+    }
+    
     
 }
 
 
 void main(int argc, char *argv[]){
+    if(argc != 4){
+        printf("usage is:  函数名   块大小(MB)   单盘写入次数    初始偏移值\n");
+        exit(1);
+    }
+      //获取参数
+    long blocksize = atol(argv[1]);  //convert a string to long
+    long count = atol(argv[2]);
+    long initial_offset = atol(argv[3]);
+    printf("blocksize is %ld MB\n",blocksize);
+    printf("the number of single disk write times is  %ld\n",count);
+    printf("the initial offset is %ld\n",initial_offset);
 
     //构建XX MB大小的字符串
-    char *buf_string = getBufString(1);
+    char *buf_string = getBufString(blocksize);
+    
 
+    
     //获取程序开始执行时间
     struct timeval start, end;
     float time_use=0;
     gettimeofday(&start,NULL);
     
     //打开设备文件
-    const char* pathname="/dev/sdb";
-    int fd=open(pathname,O_WRONLY);
-    if (fd==-1) {
+    int fd[3];
+    const char* pathname1="/dev/sdb";
+    const char* pathname2="/dev/sdc";
+    const char* pathname3="/dev/sdd";
+    fd[0] = open(pathname1,O_WRONLY);
+    fd[1] = open(pathname2,O_WRONLY);
+    fd[2] = open(pathname3,O_WRONLY);
+    if (fd[0]==-1 || fd[1]==-1 || fd[2]==-1) {
         printf("%s",strerror(errno));
     }
 
@@ -111,10 +137,11 @@ void main(int argc, char *argv[]){
     {
         printf("main() : 创建线程 %d \n",i);
         index[i].threadid = i;
-        index[i].fd = fd;
-        index[i].blocksize = 1;
-        index[i].offset = 128 + i*(1024*1024+2);
+        index[i].fd = fd[i];
+        index[i].blocksize = blocksize;
+        index[i].offset = initial_offset;
         index[i].buf_string = buf_string;
+        index[i].count = count;
         ret = pthread_create(&Pthread[i],NULL, pwritedisk,(void *)&index[i]);
         if (0 != ret){
             printf("Error: 创建线程失败！\n");
@@ -131,17 +158,22 @@ void main(int argc, char *argv[]){
         }
     }
 
-
-    close(fd);
+    int z;
+    for(z =0; z < NUM_Threads; z++)
+    {
+        close(fd[z]);
+    }
 
     //获取程序结束时间并计算程序执行时间
     gettimeofday(&end,NULL);
     time_use=(end.tv_sec-start.tv_sec)*1000000+(end.tv_usec-start.tv_usec);//微秒
     printf("time_use is %.10f us\n",time_use);
     //printf("when the blocksize is %d MB, the read speed is %.10f MB/s\n");
-
+    printf("when the blocksize is %d MB, the NUM_THREADS is %d,the write speed is %.10f MB/s\n",
+        blocksize,NUM_Threads,(blocksize*count*NUM_Threads)/((double)time_use/1000000));
+    printf("the length of buf_string is : %d MB\n",(strlen(buf_string)));
     printf("the main() thread end!\n");
 
     free(buf_string);
-
+    
 }

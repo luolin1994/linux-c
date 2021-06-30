@@ -52,6 +52,15 @@ void main(){
     FILE* fp = NULL;
     char* buf = getBufString(16);
 
+    // 以附加方式打开可读/写的文件, 如果没有此文件则会进行创建，然后以附加方式打开可读/写的文件
+    //函数fopen_s不可用？？？
+    fp = fopen("demo.txt","a+");
+    fputs(buf,fp);
+
+    free(buf);
+    fclose(fp);
+    
+
     
 }
 
