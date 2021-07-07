@@ -83,7 +83,7 @@ void  * pwritedisk(void * pThreadData){
         if((ret = pwrite(tData->fd,tData->buf_string,tData->blocksize*1024*1024,poffset)) == -1){
             printf("pwrite %d failed\n",tData->threadid);
         }else{
-            printf("线程 %d pwrite 的第%ld次操作成功!\n",tData->threadid,i);
+            printf("线程 %d pwrite 的第%ld次操作成功! %ld\n",tData->threadid,i,ret);
         //printf("线程 %d write buf is:  %s\n",tData->threadid,tData->buf_string);
         }
     }
@@ -136,7 +136,7 @@ void main(int argc, char *argv[]){
         printf("main() : 创建线程 %d \n",i);
         index[i].threadid = i;
         index[i].fd = fd;
-        index[i].blocksize = 1;
+        index[i].blocksize = blocksize;
         index[i].offset = initial_offset + i*(count*blocksize*1024*1024);
         index[i].buf_string = buf_string;
         index[i].count = count;

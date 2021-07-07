@@ -97,7 +97,7 @@ void main(int argc, char *argv[]){
         if((ret = pwrite(fd,buf_string,blocksize*1024*1024,offset)) == -1){
             printf("%d pwrite is error!%s,the offset is %ld\n",i,strerror(errno),initial_offset+ i*(blocksize*1024*1024));}
         else{
-            printf("%d pwrite success\n ",i);
+            printf("%d pwrite success \n ",i);
             //printf("the writed data is: %s\n",buf_string);
     }
     }  

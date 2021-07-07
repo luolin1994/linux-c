@@ -19,9 +19,9 @@ void main(int argc, char *argv[]){
     }
 
     //获取参数
-    int blocksize = atoi(argv[1]);  //convert a string to an integer
-    int num = atoi(argv[2]);
-    int initial_offset = atoi(argv[3]);
+    long blocksize = atol(argv[1]);  //convert a string to an 
+    long num = atol(argv[2]);
+    long initial_offset = atol(argv[3]);
     printf("blocksize is %d MB\n",blocksize);
     printf("the number of write times is  %d\n",num);
     printf("the initial offset is %d\n",initial_offset);
@@ -31,7 +31,7 @@ void main(int argc, char *argv[]){
     float time_use=0;
     gettimeofday(&start,NULL);
     
-    const char* pathname="/dev/sdb";
+    const char* pathname="/dev/sdf";
     int fd=open(pathname,O_RDONLY);
     if (fd==-1) {
         printf("%s",strerror(errno));
@@ -39,15 +39,15 @@ void main(int argc, char *argv[]){
 
 
     //顺序读取
-    int i;
+    long i;
     for(i = 0;i < num ;i++){
         char *buf= (char *)malloc(blocksize * 1024 *1024* sizeof(char) + sizeof(char)); 
-        int offset = initial_offset + i*(blocksize*1024*1024);
+        long offset = initial_offset + i*(blocksize*1024*1024);
         ssize_t ret = 0;
         if((ret = pread(fd,buf,blocksize * 1024 *1024,offset)) == -1){
             printf("pread failed");
         }else{
-            printf("第%d次pread success!\n",i);
+            printf("第%d次pread success! %ld\n",i,ret);
             //printf("read buf is:  %s\n", buf);
         }
         free(buf);
